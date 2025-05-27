@@ -26,6 +26,16 @@ func totalLCM(periods []int) int {
 	return result
 }
 
+func computeNaiveLoad(tasks []engine.Task, maxTime int) []int {
+	load := make([]int, maxTime)
+	for _, t := range tasks {
+		for tick := t.Arrived; tick < maxTime; tick += t.Period {
+			load[tick]++
+		}
+	}
+	return load
+}
+
 func main() {
 	f, err := os.Open("input.json")
 	if err != nil {
@@ -55,6 +65,8 @@ func main() {
 		cutoff = len(load)
 	}
 
+	naiveLoad := computeNaiveLoad(tasks, cutoff)
+
 	csvFile, err := os.Create("load.csv")
 	if err != nil {
 		log.Fatal(err)
@@ -65,9 +77,9 @@ func main() {
 		fmt.Fprintf(csvFile, "%d,%d\n", t, load[t])
 	}
 
-	if err := engine.PlotLoad(load[:cutoff], "load.png"); err != nil {
+	if err := engine.PlotDoubleLoad(naiveLoad, load[:cutoff], "loads.png"); err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Created: load.csv, load.png")
+	fmt.Println("Created: load.csv, loads.png")
 }
