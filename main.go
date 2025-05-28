@@ -5,36 +5,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+
 	"schedule-tester/internal/engine"
+	"schedule-tester/pkg/scheduler"
+	"schedule-tester/pkg/scheduler/v1"
 )
-
-func lcm(a, b int) int {
-	gcd := func(a, b int) int {
-		for b != 0 {
-			a, b = b, a%b
-		}
-		return a
-	}
-	return a * b / gcd(a, b)
-}
-
-func totalLCM(periods []int) int {
-	result := periods[0]
-	for _, p := range periods[1:] {
-		result = lcm(result, p)
-	}
-	return result
-}
-
-func computeNaiveLoad(tasks []engine.Task, maxTime int) []int {
-	load := make([]int, maxTime)
-	for _, t := range tasks {
-		for tick := t.Arrived; tick < maxTime; tick += t.Period {
-			load[tick]++
-		}
-	}
-	return load
-}
 
 func main() {
 	f, err := os.Open("input.json")
@@ -43,29 +18,25 @@ func main() {
 	}
 	defer f.Close()
 
-	var tasks []engine.Task
+	var tasks []scheduler.Task
 	if err := json.NewDecoder(f).Decode(&tasks); err != nil {
 		log.Fatal(err)
 	}
-
-	s := engine.NewGreedyScheduler()
-
-	for _, task := range tasks {
-		s.AddTask(task)
-	}
-
-	load := s.Load()
 
 	periods := make([]int, len(tasks))
 	for i, t := range tasks {
 		periods[i] = t.Period
 	}
-	cutoff := 2 * totalLCM(periods)
-	if cutoff > len(load) {
-		cutoff = len(load)
+
+	maxTime := 2 * v1.TotalLCM(periods)
+
+	s := v1.NewScheduler(maxTime)
+	for _, task := range tasks {
+		s.AddTask(task)
 	}
 
-	naiveLoad := computeNaiveLoad(tasks, cutoff)
+	load := s.Load()
+	naiveLoad := engine.ComputeNaiveLoad(tasks, maxTime)
 
 	csvFile, err := os.Create("load.csv")
 	if err != nil {
@@ -73,11 +44,11 @@ func main() {
 	}
 	defer csvFile.Close()
 	fmt.Fprintln(csvFile, "time,load")
-	for t := 0; t < cutoff; t++ {
+	for t := 0; t < maxTime; t++ {
 		fmt.Fprintf(csvFile, "%d,%d\n", t, load[t])
 	}
 
-	if err := engine.PlotDoubleLoad(naiveLoad, load[:cutoff], "loads.png"); err != nil {
+	if err := engine.PlotDoubleLoad(naiveLoad, load[:maxTime], "loads.png"); err != nil {
 		log.Fatal(err)
 	}
 
