@@ -1,7 +1,9 @@
 package engine
 
 import (
+	"fmt"
 	"os"
+	"time"
 
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
@@ -10,19 +12,24 @@ import (
 	"gonum.org/v1/plot/vg/vgimg"
 )
 
-func PlotDoubleLoad(naiveLoad, balancingLoad []int, filename string) error {
+type LoadPlot struct {
+	Load     []int
+	Duration time.Duration
+}
+
+func PlotDoubleLoad(naiveLoad, scheduledLoad LoadPlot, filename string) error {
 	heightPerPlot := 4 * vg.Inch
 	width := 12 * vg.Inch
 	totalHeight := 2 * heightPerPlot
 
-	naivePoints := make(plotter.XYs, len(naiveLoad))
-	for i := range naiveLoad {
+	naivePoints := make(plotter.XYs, len(naiveLoad.Load))
+	for i := range naiveLoad.Load {
 		naivePoints[i].X = float64(i)
-		naivePoints[i].Y = float64(naiveLoad[i])
+		naivePoints[i].Y = float64(naiveLoad.Load[i])
 	}
 
 	naivePlot := plot.New()
-	naivePlot.Title.Text = "Naive Load (without balancing)"
+	naivePlot.Title.Text = fmt.Sprintf("Naive Load (without balancing)\nDuration of computing: %s", naiveLoad.Duration.String())
 	naivePlot.X.Label.Text = "Time"
 	naivePlot.Y.Label.Text = "Load"
 	naiveLine, err := plotter.NewLine(naivePoints)
@@ -31,13 +38,13 @@ func PlotDoubleLoad(naiveLoad, balancingLoad []int, filename string) error {
 	}
 	naivePlot.Add(naiveLine)
 
-	balancePoints := make(plotter.XYs, len(balancingLoad))
-	for i := range balancingLoad {
+	balancePoints := make(plotter.XYs, len(scheduledLoad.Load))
+	for i := range scheduledLoad.Load {
 		balancePoints[i].X = float64(i)
-		balancePoints[i].Y = float64(balancingLoad[i])
+		balancePoints[i].Y = float64(scheduledLoad.Load[i])
 	}
 	balancePlot := plot.New()
-	balancePlot.Title.Text = "Balanced Load"
+	balancePlot.Title.Text = fmt.Sprintf("Load with scheduling\nDuration of computing: %s", scheduledLoad.Duration.String())
 	balancePlot.X.Label.Text = "Time"
 	balancePlot.Y.Label.Text = "Load"
 	balanceLine, err := plotter.NewLine(balancePoints)

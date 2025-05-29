@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"schedule-tester/internal/engine"
 	"schedule-tester/pkg/scheduler"
@@ -27,15 +28,28 @@ func main() {
 	}
 
 	s := v1.NewScheduler()
+
+	startComputing := time.Now()
 	for i := range tasks {
 		s.AddTask(tasks[i], &runningTasks)
 	}
-
+	duration := time.Since(startComputing)
 	load := s.Load()
 
-	naiveLoad := engine.ComputeNaiveLoad(tasks, len(load))
+	scheduledLoadPlot := engine.LoadPlot{
+		Load:     load,
+		Duration: duration,
+	}
 
-	if err := engine.PlotDoubleLoad(naiveLoad, load, "loads.png"); err != nil {
+	startComputing = time.Now()
+	naiveLoad := engine.ComputeNaiveLoad(tasks, len(load))
+	duration = time.Since(startComputing)
+
+	naiveLoadPlot := engine.LoadPlot{
+		Load:     naiveLoad,
+		Duration: duration,
+	}
+	if err := engine.PlotDoubleLoad(naiveLoadPlot, scheduledLoadPlot, "loads.png"); err != nil {
 		log.Fatal(err)
 	}
 
