@@ -1,0 +1,22 @@
+[
+  { "id": 1,   "period": 50, "arrived": 0 },
+  { "id": 2,   "period": 10, "arrived": 5 },
+  { "id": 3,   "period": 40, "arrived": 10 },
+  { "id": 4,   "period": 30, "arrived": 15 },
+  { "id": 5,   "period": 30, "arrived": 20 },
+  { "id": 6,   "period": 10, "arrived": 25 },
+  { "id": 7,   "period": 20, "arrived": 30 },
+  { "id": 8,   "period": 40, "arrived": 35 },
+  { "id": 9,   "period": 20, "arrived": 40 },
+  { "id": 10,  "period": 10, "arrived": 45 },
+  { "id": 11,  "period": 40, "arrived": 50 },
+  { "id": 12,  "period": 30, "arrived": 55 },
+  { "id": 13,  "period": 10, "arrived": 60 },
+  { "id": 14,  "period": 20, "arrived": 65 },
+  { "id": 15,  "period": 10, "arrived": 70 },
+  { "id": 16,  "period": 50, "arrived": 75 },
+  { "id": 17,  "period": 20, "arrived": 80 },
+  { "id": 18,  "period": 30, "arrived": 85 },
+  { "id": 19,  "period": 20, "arrived": 90 },
+  { "id": 20,  "period": 10, "arrived": 95 }
+]

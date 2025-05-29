@@ -13,45 +13,55 @@ import (
 )
 
 func main() {
-	f, err := os.Open("input.json")
-	if err != nil {
+	fmt.Println("Start testing")
+
+	tests := []engine.TestData{
+		{
+			Title:     "Small pool scheduling",
+			InputFile: "input-data/smallpool.json",
+		},
+		{
+			Title:     "Same time pool scheduling",
+			InputFile: "input-data/sametimepool.json",
+		},
+		{
+			Title:     "Big pool scheduling",
+			InputFile: "input-data/bigpool.json",
+		},
+	}
+
+	//startComputing := time.Now()
+	//naiveLoad := engine.ComputeNaiveLoad(tasks, len(load))
+	//duration := time.Since(startComputing)
+
+	for i := range tests {
+		f, err := os.Open(tests[i].InputFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+
+		var (
+			tasks        []scheduler.Task
+			runningTasks []scheduler.Task
+		)
+		if err := json.NewDecoder(f).Decode(&tasks); err != nil {
+			log.Fatal(err)
+		}
+
+		s := v1.NewScheduler()
+
+		startComputing := time.Now()
+		for i := range tasks {
+			s.AddTask(tasks[i], &runningTasks)
+		}
+		tests[i].Duration = time.Since(startComputing)
+		tests[i].Load = s.Load()
+	}
+
+	if err := engine.PlotDoubleLoad(tests, "loads.png"); err != nil {
 		log.Fatal(err)
 	}
-	defer f.Close()
 
-	var (
-		tasks        []scheduler.Task
-		runningTasks []scheduler.Task
-	)
-	if err := json.NewDecoder(f).Decode(&tasks); err != nil {
-		log.Fatal(err)
-	}
-
-	s := v1.NewScheduler()
-
-	startComputing := time.Now()
-	for i := range tasks {
-		s.AddTask(tasks[i], &runningTasks)
-	}
-	duration := time.Since(startComputing)
-	load := s.Load()
-
-	scheduledLoadPlot := engine.LoadPlot{
-		Load:     load,
-		Duration: duration,
-	}
-
-	startComputing = time.Now()
-	naiveLoad := engine.ComputeNaiveLoad(tasks, len(load))
-	duration = time.Since(startComputing)
-
-	naiveLoadPlot := engine.LoadPlot{
-		Load:     naiveLoad,
-		Duration: duration,
-	}
-	if err := engine.PlotDoubleLoad(naiveLoadPlot, scheduledLoadPlot, "loads.png"); err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("Created: load.csv, loads.png")
+	fmt.Println("Complete. loads.png created.")
 }

@@ -1,8 +1,17 @@
 package engine
 
 import (
+	"time"
+
 	"schedule-tester/pkg/scheduler"
 )
+
+type TestData struct {
+	Title     string
+	InputFile string
+	Load      []int
+	Duration  time.Duration
+}
 
 func ComputeNaiveLoad(tasks []scheduler.Task, maxTime int) []int {
 	load := make([]int, maxTime)
