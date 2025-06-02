@@ -9,6 +9,7 @@ import (
 type TestData struct {
 	Title     string
 	InputFile string
+	NaiveLoad []int
 	Load      []int
 	Duration  time.Duration
 }

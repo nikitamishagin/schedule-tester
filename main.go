@@ -30,10 +30,6 @@ func main() {
 		},
 	}
 
-	//startComputing := time.Now()
-	//naiveLoad := engine.ComputeNaiveLoad(tasks, len(load))
-	//duration := time.Since(startComputing)
-
 	for i := range tests {
 		f, err := os.Open(tests[i].InputFile)
 		if err != nil {
@@ -49,11 +45,16 @@ func main() {
 			log.Fatal(err)
 		}
 
+		// Calculate naive load
+		maxTime := 1200 // Fixed maxTime for ComputeNaiveLoad as required
+		tests[i].NaiveLoad = engine.ComputeNaiveLoad(tasks, maxTime)
+
+		// Calculate algorithm load
 		s := v1.NewScheduler()
 
 		startComputing := time.Now()
-		for i := range tasks {
-			s.AddTask(tasks[i], &runningTasks)
+		for j := range tasks {
+			s.AddTask(tasks[j], &runningTasks)
 		}
 		tests[i].Duration = time.Since(startComputing)
 		tests[i].Load = s.Load()

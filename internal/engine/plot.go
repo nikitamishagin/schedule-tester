@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"image/color"
 	"os"
 
 	"gonum.org/v1/plot"
@@ -12,46 +13,85 @@ import (
 )
 
 func PlotDoubleLoad(tests []TestData, filename string) error {
+	// Define grid dimensions
+	numCols := len(tests)
+	numRows := 2 // One row for naive load, one for algorithm load
+
+	// Define plot sizes
 	heightPerPlot := 4 * vg.Inch
-	width := 20 * vg.Inch
-	totalHeight := heightPerPlot * vg.Length(len(tests))
+	widthPerPlot := 10 * vg.Inch // Increased from 6 to 10 inches to stretch horizontally
+	totalWidth := widthPerPlot * vg.Length(numCols)
+	totalHeight := heightPerPlot * vg.Length(numRows)
 
-	plots := make([]plot.Plot, len(tests))
-	for i := range tests {
-		p := plot.New()
-		points := make(plotter.XYs, len(tests[i].Load))
+	// Create a grid of plots
+	plots := make([][]*plot.Plot, numRows)
+	for r := range plots {
+		plots[r] = make([]*plot.Plot, numCols)
+		for c := range plots[r] {
+			plots[r][c] = plot.New()
+		}
+	}
 
-		for j := range tests[i].Load {
-			points[j].X = float64(j)
-			points[j].Y = float64(tests[i].Load[j])
+	// Fill in the plots
+	for c := range tests {
+		// Naive load plot (top row)
+		p := plots[0][c]
+		naivePoints := make(plotter.XYs, len(tests[c].NaiveLoad))
+		for j := range tests[c].NaiveLoad {
+			naivePoints[j].X = float64(j)
+			naivePoints[j].Y = float64(tests[c].NaiveLoad[j])
 		}
 
-		p.Title.Text = fmt.Sprintf("%s\nDuration of computing: %s", tests[i].Title, tests[i].Duration.String())
+		p.Title.Text = fmt.Sprintf("%s\nNaive Load (No Balancing)", tests[c].Title)
 		p.X.Label.Text = "Time"
 		p.Y.Label.Text = "Load"
 
-		line, err := plotter.NewLine(points)
+		naiveLine, err := plotter.NewLine(naivePoints)
 		if err != nil {
 			return err
 		}
+		naiveLine.Color = color.RGBA{0, 0, 255, 255} // Blue
+		p.Add(naiveLine)
 
-		p.Add(line)
-		plots[i] = *p
+		// Algorithm load plot (bottom row)
+		p = plots[1][c]
+		algoPoints := make(plotter.XYs, len(tests[c].Load))
+		for j := range tests[c].Load {
+			algoPoints[j].X = float64(j)
+			algoPoints[j].Y = float64(tests[c].Load[j])
+		}
+
+		p.Title.Text = fmt.Sprintf("%s\nAlgorithm v1 Load\nDuration: %s", tests[c].Title, tests[c].Duration.String())
+		p.X.Label.Text = "Time"
+		p.Y.Label.Text = "Load"
+
+		algoLine, err := plotter.NewLine(algoPoints)
+		if err != nil {
+			return err
+		}
+		algoLine.Color = color.RGBA{255, 0, 0, 255} // Red
+		p.Add(algoLine)
 	}
 
-	img := vgimg.New(width, totalHeight)
+	// Create the image with higher resolution (300 DPI)
+	img := vgimg.NewWith(
+		vgimg.UseWH(totalWidth, totalHeight),
+		vgimg.UseDPI(300), // Higher DPI for better resolution
+	)
 	dc := draw.New(img)
 
-	canvas := make([]draw.Canvas, len(tests))
-	for i := range tests {
-		canvas[i] = draw.Canvas{
-			Canvas: dc,
-			Rectangle: vg.Rectangle{
-				Min: vg.Point{X: 0, Y: vg.Length(i) * heightPerPlot},
-				Max: vg.Point{X: width, Y: vg.Length(i+1) * heightPerPlot},
-			},
+	// Draw each plot in its position in the grid
+	for r := range plots {
+		for c := range plots[r] {
+			canvas := draw.Canvas{
+				Canvas: dc,
+				Rectangle: vg.Rectangle{
+					Min: vg.Point{X: vg.Length(c) * widthPerPlot, Y: vg.Length(numRows-r-1) * heightPerPlot},
+					Max: vg.Point{X: vg.Length(c+1) * widthPerPlot, Y: vg.Length(numRows-r) * heightPerPlot},
+				},
+			}
+			plots[r][c].Draw(canvas)
 		}
-		plots[i].Draw(canvas[i])
 	}
 
 	w, err := os.Create(filename)
