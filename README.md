@@ -70,3 +70,12 @@ The first implementation (v1) uses loops to calculate the startup with the least
 1. For each new task, it calculates the best starting time within its arrival period
 2. The best time is determined by finding the time slot that minimizes the maximum load
 3. The algorithm uses the Least Common Multiple (LCM) of task periods to determine the scheduling horizon
+
+### V2
+
+The second implementation (v2) is functionally almost identical to v1 and follows the same approach for scheduling
+tasks.
+
+1. The least common multiple (LCM) of periods is used for the planning horizon
+2. The enumeration of possible starts is stopped early if the maximum load for the current start coincides with the
+   value at the previous step.
