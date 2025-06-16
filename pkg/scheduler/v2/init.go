@@ -81,17 +81,17 @@ func (s *Scheduler) AddTask(newTask scheduler.Task, runningTasks *[]scheduler.Ta
 			}
 		}
 
-		// If score for this start time matches previous, stop checking further options
-		if score == prevScore {
-			break
-		}
-		prevScore = score
-
 		// If the current score is the best so far, record this start time
 		if score < bestScore {
 			bestScore = score
 			bestStart = start
 		}
+
+		// Now update prevScore after using its value in comparison
+		if score == prevScore {
+			break // Stop checking further options if the score hasn't changed
+		}
+		prevScore = score
 	}
 
 	// Schedule the task at the best found start time and update the load array
