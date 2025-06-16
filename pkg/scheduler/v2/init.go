@@ -1,7 +1,9 @@
 package v2
 
 import (
-	"schedule-tester/pkg/scheduler"
+	"math"
+
+	"github.com/nikitamishagin/schedule-tester/pkg/scheduler"
 )
 
 type Scheduler struct {
@@ -37,7 +39,58 @@ func totalLCM(periods []int) int {
 }
 
 func (s *Scheduler) AddTask(newTask scheduler.Task, runningTasks *[]scheduler.Task) int {
-	// TODO: Improve logic with binary tree
+	maxTime := 0
+	if len(*runningTasks) != 0 {
+		periods := make([]int, len(*runningTasks))
+		for i, task := range *runningTasks {
+			periods[i] = task.Period
+		}
 
-	return 0
+		maxTime = 1 * totalLCM(periods)
+	} else {
+		maxTime = newTask.Period + 1
+	}
+
+	bestScore := math.MaxInt
+	bestStart := newTask.Arrived
+	prevScore := 0
+
+	for start := newTask.Arrived; start <= newTask.Arrived+newTask.Period; start++ {
+		score := 0
+		for k := 0; ; k++ {
+			tick := start + k*newTask.Period
+			if tick >= maxTime {
+				break
+			}
+
+			if len(s.load) < maxTime {
+				s.load = append(s.load, make([]int, maxTime-len(s.load))...)
+			}
+
+			if s.load[tick] > score {
+				score = s.load[tick]
+			}
+		}
+
+		if score == prevScore {
+			break
+		}
+		prevScore = score
+
+		if score < bestScore {
+			bestScore = score
+			bestStart = start
+		}
+	}
+
+	for k := 0; ; k++ {
+		tick := bestStart + k*newTask.Period
+		if tick >= maxTime {
+			break
+		}
+		s.load[tick]++
+	}
+
+	*runningTasks = append(*runningTasks, newTask)
+	return bestStart
 }
