@@ -1,4 +1,4 @@
-module schedule-tester
+module github.com/nikitamishagin/schedule-tester
 
 go 1.23.0
 

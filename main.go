@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"schedule-tester/internal/engine"
-	"schedule-tester/pkg/scheduler"
-	"schedule-tester/pkg/scheduler/v1"
+	"github.com/nikitamishagin/schedule-tester/internal/engine"
+	"github.com/nikitamishagin/schedule-tester/pkg/scheduler"
+	"github.com/nikitamishagin/schedule-tester/pkg/scheduler/v1"
 )
 
 func main() {

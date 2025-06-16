@@ -3,7 +3,7 @@ package engine
 import (
 	"time"
 
-	"schedule-tester/pkg/scheduler"
+	"github.com/nikitamishagin/schedule-tester/pkg/scheduler"
 )
 
 type TestData struct {

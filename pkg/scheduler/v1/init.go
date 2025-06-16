@@ -3,7 +3,7 @@ package v1
 import (
 	"math"
 
-	"schedule-tester/pkg/scheduler"
+	"github.com/nikitamishagin/schedule-tester/pkg/scheduler"
 )
 
 type Scheduler struct {
