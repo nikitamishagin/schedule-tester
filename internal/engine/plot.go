@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 	"os"
+	"sort"
 
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
@@ -12,14 +13,43 @@ import (
 	"gonum.org/v1/plot/vg/vgimg"
 )
 
-func PlotDoubleLoad(tests []TestData, filename string) error {
-	// Define grid dimensions
+// Color palette for algorithm lines
+var algorithmColors = []color.RGBA{
+	{255, 0, 0, 255},    // Red
+	{0, 128, 0, 255},    // Green
+	{255, 140, 0, 255},  // Orange
+	{128, 0, 128, 255},  // Purple
+	{64, 224, 208, 255}, // Turquoise
+	{139, 69, 19, 255},  // Brown
+	{255, 20, 147, 255}, // Pink
+}
+
+// PlotMultiRowLoads draws a grid of plots: for each test, the first row is the naive load, following rows are each algorithm version
+func PlotMultiRowLoads(tests []TestData, filename string) error {
+	if len(tests) == 0 {
+		return fmt.Errorf("no test data provided")
+	}
+
+	// Get all version names by scanning the test data (assuming same set for all tests)
+	versionSet := make(map[string]struct{})
+	for i := range tests {
+		for version := range tests[i].Loads {
+			versionSet[version] = struct{}{}
+		}
+	}
+	var versions []string
+	for ver := range versionSet {
+		versions = append(versions, ver)
+	}
+	sort.Strings(versions)
+
+	// First row is always naive, rest are for algorithm versions
+	numRows := 1 + len(versions)
 	numCols := len(tests)
-	numRows := 2 // One row for naive load, one for algorithm load
 
 	// Define plot sizes
 	heightPerPlot := 4 * vg.Inch
-	widthPerPlot := 10 * vg.Inch // Increased from 6 to 10 inches to stretch horizontally
+	widthPerPlot := 10 * vg.Inch // Wide format for easy reading
 	totalWidth := widthPerPlot * vg.Length(numCols)
 	totalHeight := heightPerPlot * vg.Length(numRows)
 
@@ -34,7 +64,7 @@ func PlotDoubleLoad(tests []TestData, filename string) error {
 
 	// Fill in the plots
 	for c := range tests {
-		// Naive load plot (top row)
+		// Top row: Naive load
 		p := plots[0][c]
 		naivePoints := make(plotter.XYs, len(tests[c].NaiveLoad))
 		for j := range tests[c].NaiveLoad {
@@ -52,25 +82,34 @@ func PlotDoubleLoad(tests []TestData, filename string) error {
 		}
 		naiveLine.Color = color.RGBA{0, 0, 255, 255} // Blue
 		p.Add(naiveLine)
+		p.Legend.Add("Naive", naiveLine)
 
-		// Algorithm load plot (bottom row)
-		p = plots[1][c]
-		algoPoints := make(plotter.XYs, len(tests[c].Load))
-		for j := range tests[c].Load {
-			algoPoints[j].X = float64(j)
-			algoPoints[j].Y = float64(tests[c].Load[j])
+		// Each following row: one for each algorithm version
+		for vIdx, version := range versions {
+			lp := plots[vIdx+1][c]
+			loadPoints := tests[c].Loads[version]
+			pts := make(plotter.XYs, len(loadPoints))
+			for j := range loadPoints {
+				pts[j].X = float64(j)
+				pts[j].Y = float64(loadPoints[j])
+			}
+
+			lp.Title.Text = fmt.Sprintf("%s\n%s Load", tests[c].Title, version)
+			if duration, ok := tests[c].Durations[version]; ok {
+				lp.Title.Text += fmt.Sprintf(" (Duration: %s)", duration.String())
+			}
+
+			lp.X.Label.Text = "Time"
+			lp.Y.Label.Text = "Load"
+			algoLine, err := plotter.NewLine(pts)
+			if err != nil {
+				return err
+			}
+
+			algoLine.Color = algorithmColors[vIdx%len(algorithmColors)]
+			lp.Add(algoLine)
+			lp.Legend.Add(version, algoLine)
 		}
-
-		p.Title.Text = fmt.Sprintf("%s\nAlgorithm v1 Load\nDuration: %s", tests[c].Title, tests[c].Duration.String())
-		p.X.Label.Text = "Time"
-		p.Y.Label.Text = "Load"
-
-		algoLine, err := plotter.NewLine(algoPoints)
-		if err != nil {
-			return err
-		}
-		algoLine.Color = color.RGBA{255, 0, 0, 255} // Red
-		p.Add(algoLine)
 	}
 
 	// Create the image with higher resolution (300 DPI)

@@ -10,8 +10,8 @@ type TestData struct {
 	Title     string
 	InputFile string
 	NaiveLoad []int
-	Load      []int
-	Duration  time.Duration
+	Loads     map[string][]int
+	Durations map[string]time.Duration
 }
 
 func ComputeNaiveLoad(tasks []scheduler.Task, maxTime int) []int {

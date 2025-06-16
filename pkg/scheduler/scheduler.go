@@ -7,6 +7,6 @@ type Task struct {
 }
 
 type Scheduler interface {
-	AddTask(Task, []Task) int
+	AddTask(Task, *[]Task) int
 	Load() []int
 }
